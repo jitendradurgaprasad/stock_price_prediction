@@ -1,0 +1,9 @@
+{
+  "ticker": "AAPL",
+  "as_of_date": "2026-09-29",
+  "last_adjusted_close": 329.3999938964844,
+  "next_session_adjusted_close_estimate": 328.27141283685694,
+  "predicted_change_percent": -0.3426172072067857,
+  "change_percent_vs_last_close": -0.3426172072067857,
+  "horizon": "one trading session; one-step forecast using the latest 60 observed sessions"
+}

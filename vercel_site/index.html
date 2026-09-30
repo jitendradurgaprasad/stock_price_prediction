@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101b2d">
+  <meta name="description" content="A one-session AAPL price trend forecast built with an LSTM and historical Yahoo Finance data.">
+  <title>AAPL Trend Forecast · Signal Lab</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b1422;--panel:#121f32;--panel2:#17263b;--line:#263750;--ink:#eef4fb;--muted:#9badc5;--accent:#5de0b2;--blue:#6bb6ff;--red:#ff9a8b;--gold:#e9c46a}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 78% -10%,#1b3552 0,transparent 42%),var(--bg);color:var(--ink);font:15px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+    a{color:var(--accent)}.wrap{width:min(1120px,calc(100% - 40px));margin:auto}.top{height:74px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ffffff12}.brand{display:flex;align-items:center;gap:11px;font-weight:720;letter-spacing:.02em}.mark{width:30px;height:30px;border:1px solid #5de0b277;border-radius:9px;display:grid;place-items:center;color:var(--accent);font-size:18px}.eyebrow{color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}.badge{border:1px solid #e9c46a55;border-radius:999px;padding:7px 12px;color:#f0d58d;font-size:12px;background:#e9c46a0d}
+    .hero{padding:54px 0 27px;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:end}.hero h1{font-size:clamp(34px,5vw,54px);line-height:1.05;letter-spacing:-.045em;margin:9px 0 12px}.hero p{margin:0;color:var(--muted);max-width:650px}.hero-value{text-align:right}.hero-value strong{display:block;color:var(--accent);font-size:clamp(30px,4vw,44px);letter-spacing:-.04em;line-height:1.1}.hero-value span{color:var(--muted);font-size:12px}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.card{background:linear-gradient(145deg,#16253a,#111c2d);border:1px solid var(--line);border-radius:15px;padding:18px;box-shadow:0 12px 35px #00000015}.kpi-label{color:var(--muted);font-size:12px}.kpi-value{font-size:25px;letter-spacing:-.035em;font-weight:700;margin:8px 0 3px}.kpi-note{font-size:12px;color:var(--muted)}.positive{color:var(--accent)}.negative{color:var(--red)}
+    .section{margin-top:34px}.section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:12px}.section h2{font-size:20px;letter-spacing:-.02em;margin:3px 0}.section-head p{color:var(--muted);font-size:12px;margin:0}.charts{display:grid;grid-template-columns:1.15fr .85fr;gap:12px}.chart-card{padding:18px}.chart-card h3{font-size:14px;margin:0 0 4px}.chart-card p{color:var(--muted);font-size:12px;margin:0 0 12px}.chart-card img{width:100%;height:auto;display:block;border-radius:9px;background:#0e1928}.method{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.method .card{min-height:114px}.method b{display:block;margin-bottom:5px}.method span{color:var(--muted);font-size:13px}.foot{margin:36px 0 26px;padding:18px 0;border-top:1px solid #ffffff14;color:var(--muted);font-size:12px;display:flex;justify-content:space-between;gap:20px}.error{color:var(--red)}
+    @media(max-width:760px){.hero{grid-template-columns:1fr;align-items:start;padding-top:38px}.hero-value{text-align:left}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.charts{grid-template-columns:1fr}.method{grid-template-columns:1fr}.foot{display:block}.foot span{display:block;margin-top:6px}}
+    @media(max-width:430px){.wrap{width:min(100% - 24px,1120px)}.grid{gap:8px}.card{padding:14px}.kpi-value{font-size:21px}.badge{font-size:10px;padding:6px 9px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <div class="brand"><span class="mark">↗</span><span>Signal Lab</span></div>
+      <span class="badge">Educational model · Saved snapshot</span>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <div class="eyebrow">Daily market study / AAPL</div>
+          <h1>One-session<br>trend forecast.</h1>
+          <p>A Keras LSTM trained on five years of adjusted daily prices, with moving-average and RSI context. Each estimate looks one trading session ahead.</p>
+        </div>
+        <div class="hero-value"><strong id="forecast">—</strong><span>estimated adjusted close · next session</span></div>
+      </section>
+
+      <section class="grid" aria-label="Key forecast and evaluation metrics">
+        <article class="card"><div class="kpi-label">Latest adjusted close</div><div class="kpi-value" id="last-close">—</div><div class="kpi-note" id="as-of">As of —</div></article>
+        <article class="card"><div class="kpi-label">Model change estimate</div><div class="kpi-value" id="change">—</div><div class="kpi-note">One-session horizon</div></article>
+        <article class="card"><div class="kpi-label">Holdout MAE</div><div class="kpi-value" id="mae">—</div><div class="kpi-note" id="baseline">Last-close baseline —</div></article>
+        <article class="card"><div class="kpi-label">Directional accuracy</div><div class="kpi-value" id="direction">—</div><div class="kpi-note" id="test-period">Test window —</div></article>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><div><div class="eyebrow">Model evaluation</div><h2>What the model saw</h2></div><p id="sessions">—</p></div>
+        <div class="charts">
+          <article class="card chart-card"><h3>Price and technical indicators</h3><p>Adjusted close · SMA(20) · SMA(50) · RSI(14)</p><img src="/figures/price_indicators.png" alt="AAPL adjusted close, moving averages, and relative strength index"></article>
+          <article class="card chart-card"><h3>Chronological holdout</h3><p>Actual versus rolling one-step predictions</p><img src="/figures/test_predictions.png" alt="Actual AAPL prices compared with LSTM one-session predictions"></article>
+          <article class="card chart-card"><h3>Training progress</h3><p>Training and validation loss by epoch</p><img src="/figures/training_history.png" alt="LSTM training and validation loss"></article>
+          <article class="card chart-card"><h3>Read the score honestly</h3><p>The last-close baseline had lower price error in this test window. This model is a learning example; historical prices cannot anticipate market shocks.</p><p id="model-note">Evaluation uses a chronological 70/15/15 split and train-only scaling.</p></article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><div><div class="eyebrow">Method</div><h2>Forecast setup</h2></div></div>
+        <div class="method">
+          <article class="card"><b>60-session input</b><span>The network predicts the next session's percentage change, then applies it to the latest adjusted close.</span></article>
+          <article class="card"><b>Technical context</b><span>Inputs include recent returns, gaps from SMA(20/50), RSI(14), and log volume.</span></article>
+          <article class="card"><b>Held-out evaluation</b><span>Test forecasts use the prior observed sessions at each step; MAE is reported in USD.</span></article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot"><span>Market data snapshot: Yahoo Finance via yfinance. Prices are automatically adjusted for splits and dividends.</span><span>Educational use only · Not investment advice</span></footer>
+  </div>
+  <script>
+    const money = n => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(n);
+    fetch('/data.json').then(r => { if(!r.ok) throw new Error('Could not load saved metrics'); return r.json(); }).then(({metrics:m,forecast:f}) => {
+      document.getElementById('forecast').textContent = money(f.next_session_adjusted_close_estimate);
+      document.getElementById('last-close').textContent = money(f.last_adjusted_close);
+      document.getElementById('as-of').textContent = `As of ${f.as_of_date}`;
+      const change = document.getElementById('change');
+      change.textContent = `${f.change_percent_vs_last_close >= 0 ? '+' : ''}${f.change_percent_vs_last_close.toFixed(2)}%`;
+      change.classList.add(f.change_percent_vs_last_close >= 0 ? 'positive' : 'negative');
+      document.getElementById('mae').textContent = money(m.mae);
+      document.getElementById('baseline').textContent = `Last-close baseline ${money(m.naive_last_close_mae)} MAE`;
+      document.getElementById('direction').textContent = `${m.directional_accuracy_percent.toFixed(1)}%`;
+      document.getElementById('test-period').textContent = `Test period ${m.test_start} to ${m.test_end}`;
+      document.getElementById('sessions').textContent = `${m.test_rows} test sessions · ${m.epochs_completed} training epochs`;
+    }).catch(e => { document.getElementById('forecast').textContent = 'Data unavailable'; document.getElementById('forecast').classList.add('error'); console.error(e); });
+  </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{
+  "mae": 3.951931856600041,
+  "rmse": 5.304071880763751,
+  "mape_percent": 1.3759757461781557,
+  "directional_accuracy_percent": 46.96132596685083,
+  "naive_last_close_mae": 3.5845099180442834,
+  "ticker": "AAPL",
+  "target": "next trading session adjusted close (USD)",
+  "lookback_sessions": 60,
+  "feature_columns": [
+    "Daily_Return",
+    "SMA_20_Gap",
+    "SMA_50_Gap",
+    "RSI_14",
+    "Log_Volume"
+  ],
+  "rows_after_indicator_warmup": 1205,
+  "train_rows": 843,
+  "validation_rows": 181,
+  "test_rows": 181,
+  "test_start": "2026-01-09",
+  "test_end": "2026-09-29",
+  "epochs_completed": 13
+}
