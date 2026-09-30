@@ -19,6 +19,7 @@ This project uses Yahoo Finance daily history, technical indicators, and a Keras
 | `stock_lstm.py`, `train.py` | Reusable implementation and command-line training entry point |
 | `requirements.txt` | Python package requirements |
 | `launch_app.bat` | Windows one-click launcher; creates `.venv`, installs dependencies, then starts the dashboard |
+| `Stock_Price_Trend_Prediction_Project_Report.pdf` | Project report covering the methodology, evaluation, plots, limitations, and run instructions |
 
 ## Run it
 
